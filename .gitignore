@@ -1,0 +1,39 @@
+# ===== Java / Maven 构建产物 =====
+target/
+build/
+*.class
+*.jar
+*.war
+*.ear
+!.mvn/wrapper/maven-wrapper.jar
+
+# ===== 日志与测试临时文件 =====
+*.log
+*.dumpstream
+*.dump
+hs_err_pid*.log
+replay_pid*.log
+
+# ===== IDE =====
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+nbproject/
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== 运行时数据（本地文件存储目录，保留占位文件） =====
+party-server/data/files/*
+party-server/*/data/files/*
+!**/data/files/.gitkeep
+
+# ===== 工具临时产物 =====
+.workbuddy/tmp/
