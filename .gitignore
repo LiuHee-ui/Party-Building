@@ -13,6 +13,8 @@ build/
 *.dump
 hs_err_pid*.log
 replay_pid*.log
+__pycache__/
+*.py[cod]
 
 # ===== IDE =====
 .idea/
@@ -35,5 +37,21 @@ party-server/data/files/*
 party-server/*/data/files/*
 !**/data/files/.gitkeep
 
-# ===== 工具临时产物 =====
-.workbuddy/tmp/
+# ===== Agent 工作目录 =====
+# .workbuddy/ 是 AI 助手的工作记忆与临时产物（含本机绝对路径、内部笔记）。
+# 曾经因此把开发凭据抄进公开仓库，故整体排除，不再纳入版本控制。
+.workbuddy/
+
+# ===== 本地凭据与开发覆盖配置（仓库为公开仓库，任何凭据都不得提交）=====
+# 真实口令/密钥请放本地覆盖文件（模板见同名 .example）或走环境变量注入。
+party-server/party-boot/src/main/resources/application-dev-local.yml
+application-dev-local.yml
+application-local.yml
+.env
+.env.local
+*.env.local
+
+# ===== 密钥与证书 =====
+*.p12
+*.jks
+*.keystore

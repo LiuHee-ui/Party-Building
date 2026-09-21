@@ -1,14 +1,30 @@
 # 开发环境配置
+#
+# ⚠️ 本文件纳入版本控制，而仓库是**公开仓库** —— 严禁在这里写入任何真实凭据。
+#    真实口令与密钥请走以下两条路（都已被 .gitignore 排除在版本控制之外）：
+#      1) 环境变量注入（优先级最高，见各项的 ${VAR:default}）
+#      2) 本地覆盖文件 application-dev-local.yml
+#         模板见 application-dev-local.yml.example，复制后填入真实值即可。
+#    本地覆盖文件为什么能生效：Spring 规定「被 spring.config.import 导入的文件，
+#    其属性优先级高于触发导入的文件」，因此本地文件的值会覆盖本文件的默认值。
+#
 # 数据库使用专用账号 hongmai，仅授权 hongmai_party 库（避免用 root 连业务库）
+
 spring:
+  config:
+    import:
+      - optional:classpath:application-dev-local.yml
+      - optional:file:./application-dev-local.yml
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     # characterEncoding 必须是 Java 字符集名（UTF-8），不能写 MySQL 服务端的 utf8mb4 ——
     # 写错会让连接在建立阶段就抛 UnsupportedEncodingException，报错信息还容易被误读成网络问题。
     # 服务端侧的 utf8mb4 由驱动自动协商，无需在这里指定。
-    url: jdbc:mysql://127.0.0.1:3306/hongmai_party?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-    username: hongmai
-    password: ***REMOVED***
+    url: "jdbc:mysql://${PARTY_DB_HOST:127.0.0.1}:${PARTY_DB_PORT:3306}/${PARTY_DB_NAME:hongmai_party}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+    username: "${PARTY_DB_USER:hongmai}"
+    # 无默认真实口令。空值只够「不连库也能起上下文」，真实联调必须注入。
+    password: "${PARTY_DB_PASSWORD:}"
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -16,9 +32,9 @@ spring:
 
   data:
     redis:
-      host: 127.0.0.1
-      port: 6379
-      database: 0
+      host: "${PARTY_REDIS_HOST:127.0.0.1}"
+      port: ${PARTY_REDIS_PORT:6379}
+      database: ${PARTY_REDIS_DB:0}
       timeout: 3000ms
       lettuce:
         pool:
@@ -26,20 +42,24 @@ spring:
           max-idle: 4
           min-idle: 1
 
-# 开发联调开关。
-# 打开后才会注册 /dev/auth/login（免微信登录）。生产配置必须不设或设为 false，
-# 否则任何人都能凭一个 openId 拿到登录态。
+# 开发联调开关。**默认关闭**，这是一种「显式开启才能用」的设计。
+# 打开后会注册 /dev/auth/login（免微信登录）——任何人凭一个 openId 就能拿到登录态。
+# 本地联调时才开启：在 application-dev-local.yml 里写 app.dev-login-enabled: true，
+# 或设环境变量 PARTY_DEV_LOGIN_ENABLED=true。
 app:
-  dev-login-enabled: true
+  dev-login-enabled: ${PARTY_DEV_LOGIN_ENABLED:false}
 
-# 敏感字段加密密钥（仅开发环境，生产必须改为环境变量注入）
-# 明文为 ***REMOVED***（32 字节），换密钥会导致既有密文无法解密
+# 敏感字段加密密钥（AES，Base64，长度须为 16/24/32 字节）。
+# **刻意不设默认值**：缺失时 CryptoKeyConfig 会让应用直接启动失败。
+# 这是 fail-fast —— 宁可起不来，也不要拿一个公开的密钥静默加密实名、手机号等敏感字段。
+# 本地开发请在 application-dev-local.yml 或环境变量 PARTY_CRYPTO_KEY 中提供。
+# ⚠️ 更换密钥会导致既有密文无法解密，需要清库重建（开发库直接跑 sql/ 下的脚本即可）。
 crypto:
-  key: "***REMOVED***"
+  key: "${PARTY_CRYPTO_KEY:}"
 
-# 微信小程序（开发占位，需替换为真实 appid/secret）
+# 微信小程序（开发占位，真实 appid/secret 走本地覆盖文件或环境变量）
 wechat:
   miniapp:
-    app-id: wxdevplaceholder0000
-    app-secret: dev-placeholder-secret
+    app-id: "${WECHAT_MINIAPP_APPID:wxdevplaceholder0000}"
+    app-secret: "${WECHAT_MINIAPP_SECRET:dev-placeholder-secret}"
     code2session-url: https://api.weixin.qq.com/sns/jscode2session

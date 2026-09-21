@@ -18,9 +18,12 @@
   8. 交卷判分（服务端判分，重复提交被拒）
   9. 排行榜与看板
 
-用法：python scripts/smoke_test.py
+用法：
+  export PARTY_MYSQL_PWD='<MySQL 口令>'   # 必填，不再硬编码进代码
+  python scripts/smoke_test.py
 """
 import json
+import os
 import subprocess
 import sys
 import time
@@ -28,8 +31,23 @@ import urllib.error
 import urllib.request
 
 BASE = "http://127.0.0.1:8080"
-MYSQL = ["mysql", "-h127.0.0.1", "-uroot", "-p***REMOVED***", "-N", "--default-character-set=utf8mb4",
-         "-e"]
+
+# MySQL 连接信息一律从环境变量读取。本仓库是公开仓库，禁止把口令写进代码。
+# 口令通过 MYSQL_PWD 环境变量传给 mysql 客户端，而不是 -p<口令> 命令行参数——
+# 命令行参数会被 `ps` / 任务管理器看到。
+MYSQL_HOST = os.environ.get("PARTY_MYSQL_HOST", "127.0.0.1")
+MYSQL_USER = os.environ.get("PARTY_MYSQL_USER", "root")
+MYSQL_PWD = os.environ.get("PARTY_MYSQL_PWD")
+
+if not MYSQL_PWD:
+    sys.exit(
+        "错误：未设置环境变量 PARTY_MYSQL_PWD。\n"
+        "  例如：export PARTY_MYSQL_PWD='<你的 MySQL 口令>'\n"
+        "  可选：PARTY_MYSQL_HOST（默认 127.0.0.1）、PARTY_MYSQL_USER（默认 root）"
+    )
+
+MYSQL = ["mysql", f"-h{MYSQL_HOST}", f"-u{MYSQL_USER}", "-N",
+         "--default-character-set=utf8mb4", "-e"]
 DB = "hongmai_party"
 
 MEMBER_OPENID = "dev-smoke-member"
@@ -40,7 +58,8 @@ failed = 0
 
 
 def sql(statement):
-    proc = subprocess.run(MYSQL + [statement], capture_output=True, text=True, encoding="utf-8")
+    proc = subprocess.run(MYSQL + [statement], capture_output=True, text=True,
+                          encoding="utf-8", env={**os.environ, "MYSQL_PWD": MYSQL_PWD})
     if proc.returncode != 0:
         raise RuntimeError("SQL 失败: " + proc.stderr.strip())
     return proc.stdout.strip()

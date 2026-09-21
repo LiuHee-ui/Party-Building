@@ -41,8 +41,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * 注意：不连真实 Redis 与 MySQL。Spring Boot 的连接池是懒初始化的，
  * 上下文装配不会触发连接，因此本测试可以在没有外部依赖的机器上跑。
+ *
+ * crypto.key 在这里显式注入一个**测试专用固定密钥**（"0123456789abcdef" 的 Base64），
+ * 与 CryptoUtilTest / AuthServiceImplTest 用的是同一个夹具值。
+ * 原因：application-dev.yml 已经不再提供默认密钥（fail-fast，避免用公开密钥加密敏感字段），
+ * 若这里不补，本测试在全新克隆的机器上会因 crypto.key 缺失而起不来。
+ * 这个值是公开的测试夹具，不是任何环境在用的密钥。
  */
-@SpringBootTest
+@SpringBootTest(properties = "crypto.key=MDEyMzQ1Njc4OWFiY2RlZg==")
 @ActiveProfiles("dev")
 class BootApplicationContextTest {
 

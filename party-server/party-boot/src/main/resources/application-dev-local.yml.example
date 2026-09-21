@@ -1,0 +1,39 @@
+# ============================================================
+# 本地开发覆盖配置模板
+# ============================================================
+#
+# 用法：
+#   1) 把本文件复制为 application-dev-local.yml（同目录下）
+#   2) 填入你自己的真实值
+#
+# 为什么这样设计：
+#   application-dev.yml 是纳入版本控制的，而仓库是公开仓库，
+#   任何写进去的凭据都等于公开。application-dev-local.yml 被 .gitignore 排除，
+#   因此真实凭据只留在本地。
+#
+# 备选方式：也可以不建这个文件，改用环境变量注入（环境变量优先级更高）：
+#   PARTY_DB_HOST / PARTY_DB_PORT / PARTY_DB_NAME / PARTY_DB_USER / PARTY_DB_PASSWORD
+#   PARTY_REDIS_HOST / PARTY_REDIS_PORT / PARTY_REDIS_DB
+#   PARTY_DEV_LOGIN_ENABLED
+#   PARTY_CRYPTO_KEY
+#   WECHAT_MINIAPP_APPID / WECHAT_MINIAPP_SECRET
+
+spring:
+  datasource:
+    # 专用账号口令（不要用 root 连业务库）
+    password: "<你的 MySQL 口令>"
+
+app:
+  # 本地联调需要免微信登录时设为 true；其它环境保持 false
+  dev-login-enabled: true
+
+crypto:
+  # AES 密钥的 Base64，解码后长度必须是 16 / 24 / 32 字节
+  # 生成方式（32 字节）：openssl rand -base64 32
+  key: "<你的 Base64 密钥>"
+
+# 拿到真实小程序凭据后再填
+# wechat:
+#   miniapp:
+#     app-id: "<appid>"
+#     app-secret: "<secret>"
